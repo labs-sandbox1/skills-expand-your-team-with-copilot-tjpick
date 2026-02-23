@@ -606,6 +606,9 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         `
         }
+        <button class="share-button" data-activity="${name}" title="Share this activity">
+          📤 Share
+        </button>
       </div>
     `;
 
@@ -624,6 +627,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add click handler for share button
+    const shareButton = activityCard.querySelector(".share-button");
+    shareButton.addEventListener("click", () => {
+      openShareModal(name, details);
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -711,6 +720,136 @@ document.addEventListener("DOMContentLoaded", () => {
       closeRegistrationModalHandler();
     }
   });
+
+  // Function to open share modal
+  function openShareModal(activityName, details) {
+    // Create share URL (using current page URL + activity name as anchor)
+    const shareUrl = `${window.location.origin}${window.location.pathname}#${encodeURIComponent(activityName)}`;
+    
+    // Create modal if it doesn't exist
+    let shareModal = document.getElementById("share-modal");
+    if (!shareModal) {
+      shareModal = document.createElement("div");
+      shareModal.id = "share-modal";
+      shareModal.className = "modal hidden";
+      shareModal.innerHTML = `
+        <div class="modal-content">
+          <span class="close-share-modal">&times;</span>
+          <h3>Share <span id="share-activity-name"></span></h3>
+          <div class="share-options">
+            <button class="share-option-btn" id="copy-link-btn">
+              <span class="share-icon">🔗</span>
+              <span>Copy Link</span>
+            </button>
+            <button class="share-option-btn" id="share-email-btn">
+              <span class="share-icon">✉️</span>
+              <span>Email</span>
+            </button>
+            <button class="share-option-btn" id="share-facebook-btn">
+              <span class="share-icon">📘</span>
+              <span>Facebook</span>
+            </button>
+            <button class="share-option-btn" id="share-twitter-btn">
+              <span class="share-icon">🐦</span>
+              <span>Twitter</span>
+            </button>
+          </div>
+          <div id="share-message" class="hidden message"></div>
+        </div>
+      `;
+      document.body.appendChild(shareModal);
+      
+      // Add event listeners for share modal (only once when created)
+      const closeShareModal = shareModal.querySelector(".close-share-modal");
+      closeShareModal.addEventListener("click", closeShareModalHandler);
+      
+      // Close when clicking outside (only added once)
+      shareModal.addEventListener("click", (event) => {
+        if (event.target === shareModal) {
+          closeShareModalHandler();
+        }
+      });
+    }
+    
+    // Update modal content
+    document.getElementById("share-activity-name").textContent = activityName;
+    
+    // Clear any previous messages
+    const shareMessage = document.getElementById("share-message");
+    shareMessage.classList.add("hidden");
+    
+    // Set up share button handlers
+    const copyLinkBtn = document.getElementById("copy-link-btn");
+    const shareEmailBtn = document.getElementById("share-email-btn");
+    const shareFacebookBtn = document.getElementById("share-facebook-btn");
+    const shareTwitterBtn = document.getElementById("share-twitter-btn");
+    
+    // Remove previous event listeners by cloning
+    const newCopyLinkBtn = copyLinkBtn.cloneNode(true);
+    const newShareEmailBtn = shareEmailBtn.cloneNode(true);
+    const newShareFacebookBtn = shareFacebookBtn.cloneNode(true);
+    const newShareTwitterBtn = shareTwitterBtn.cloneNode(true);
+    
+    copyLinkBtn.parentNode.replaceChild(newCopyLinkBtn, copyLinkBtn);
+    shareEmailBtn.parentNode.replaceChild(newShareEmailBtn, shareEmailBtn);
+    shareFacebookBtn.parentNode.replaceChild(newShareFacebookBtn, shareFacebookBtn);
+    shareTwitterBtn.parentNode.replaceChild(newShareTwitterBtn, shareTwitterBtn);
+    
+    // Add event listeners
+    newCopyLinkBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showShareMessage("Link copied to clipboard!", "success");
+      }).catch(() => {
+        showShareMessage("Failed to copy link", "error");
+      });
+    });
+    
+    newShareEmailBtn.addEventListener("click", () => {
+      const subject = encodeURIComponent(`Check out ${activityName} at Mergington High School`);
+      const body = encodeURIComponent(`I wanted to share this activity with you:\n\n${activityName}\n${details.description}\n\nSchedule: ${formatSchedule(details)}\n\nLearn more: ${shareUrl}`);
+      window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+    });
+    
+    newShareFacebookBtn.addEventListener("click", () => {
+      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+      window.open(facebookUrl, '_blank', 'width=600,height=400');
+    });
+    
+    newShareTwitterBtn.addEventListener("click", () => {
+      const text = encodeURIComponent(`Check out ${activityName} at Mergington High School!`);
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareUrl)}`;
+      window.open(twitterUrl, '_blank', 'width=600,height=400');
+    });
+    
+    // Show modal
+    shareModal.classList.remove("hidden");
+    setTimeout(() => {
+      shareModal.classList.add("show");
+    }, 10);
+  }
+  
+  // Close share modal
+  function closeShareModalHandler() {
+    const shareModal = document.getElementById("share-modal");
+    if (shareModal) {
+      shareModal.classList.remove("show");
+      setTimeout(() => {
+        shareModal.classList.add("hidden");
+      }, 300);
+    }
+  }
+  
+  // Show message in share modal
+  function showShareMessage(text, type) {
+    const shareMessage = document.getElementById("share-message");
+    shareMessage.textContent = text;
+    shareMessage.className = `message ${type}`;
+    shareMessage.classList.remove("hidden");
+    
+    setTimeout(() => {
+      shareMessage.classList.add("hidden");
+    }, 3000);
+  }
 
   // Create and show confirmation dialog
   function showConfirmationDialog(message, confirmCallback) {
