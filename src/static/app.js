@@ -721,11 +721,12 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       document.body.appendChild(shareModal);
       
-      // Add event listeners for share modal
+      // Add event listeners for share modal (only once when created)
       const closeShareModal = shareModal.querySelector(".close-share-modal");
       closeShareModal.addEventListener("click", closeShareModalHandler);
       
-      window.addEventListener("click", (event) => {
+      // Close when clicking outside (only added once)
+      shareModal.addEventListener("click", (event) => {
         if (event.target === shareModal) {
           closeShareModalHandler();
         }
